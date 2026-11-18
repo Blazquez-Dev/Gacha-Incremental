@@ -2,6 +2,7 @@ extends Node2D
 
 @export var bullet_scene: PackedScene
 @export var fire_rate := 0.5
+@export var damage := 1
 
 @onready var timer: Timer = $Timer
 
@@ -29,4 +30,5 @@ func _shoot():
 	var aim_point = target.global_position + Vector2(0, target.speed * travel_time)
 	bullet.position = origin
 	bullet.direction = (aim_point - origin).normalized()
+	bullet.damage = damage
 	get_parent().add_child(bullet)
