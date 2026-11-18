@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://bw824pu2o43jn"]
 
+[ext_resource type="Script" uid="uid://cgnh4k25wk1de" path="res://scripts/hero.gd" id="1_3uyx6"]
+[ext_resource type="PackedScene" uid="uid://de14xqrgjpqva" path="res://scenes/bullet.tscn" id="2_yvbpl"]
+
 [node name="Hero" type="Node2D" unique_id=1003991837]
+script = ExtResource("1_3uyx6")
+bullet_scene = ExtResource("2_yvbpl")
 
 [node name="Body" type="ColorRect" parent="." unique_id=2091470060]
 offset_left = -40.0
@@ -8,3 +13,5 @@ offset_top = -40.0
 offset_right = 40.0
 offset_bottom = 40.0
 color = Color(0.9764706, 0.85490197, 0, 1)
+
+[node name="Timer" type="Timer" parent="." unique_id=1952816561]
