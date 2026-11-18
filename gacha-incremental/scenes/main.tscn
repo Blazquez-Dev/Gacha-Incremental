@@ -1,8 +1,12 @@
 [gd_scene format=3 uid="uid://bu3o8ov8qfcc5"]
 
+[ext_resource type="Script" uid="uid://hanc2cnnql6t" path="res://scripts/main.gd" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bw824pu2o43jn" path="res://scenes/hero.tscn" id="1_o5qli"]
+[ext_resource type="PackedScene" uid="uid://bx7q2hp1fll4t" path="res://scenes/enemy.tscn" id="2_sugp2"]
 
 [node name="Main" type="Node2D" unique_id=585681813]
+script = ExtResource("1_0wfyh")
+enemy_scene = ExtResource("2_sugp2")
 
 [node name="background" type="ColorRect" parent="." unique_id=2097348377]
 offset_right = 1080.0
@@ -18,3 +22,5 @@ color = Color(0.423078, 0.14945498, 0.014021402, 1)
 
 [node name="Hero" parent="." unique_id=1003991837 instance=ExtResource("1_o5qli")]
 position = Vector2(540, 1680)
+
+[node name="SpawnTimer" type="Timer" parent="." unique_id=657676523]

@@ -2,7 +2,10 @@
 
 [ext_resource type="Script" uid="uid://bg2832yfp73g8" path="res://scripts/bullet.gd" id="1_mkf8s"]
 
-[node name="Bullet" type="Node2D" unique_id=681696904]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_biic7"]
+size = Vector2(12, 30)
+
+[node name="Bullet" type="Area2D" unique_id=482602516]
 script = ExtResource("1_mkf8s")
 
 [node name="body" type="ColorRect" parent="." unique_id=1800350342]
@@ -10,3 +13,6 @@ offset_left = -6.0
 offset_top = -15.0
 offset_right = 6.0
 offset_bottom = 15.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=37653393]
+shape = SubResource("RectangleShape2D_biic7")
