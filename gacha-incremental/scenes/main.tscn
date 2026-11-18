@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bu3o8ov8qfcc5"]
+
+[ext_resource type="PackedScene" uid="uid://bw824pu2o43jn" path="res://scenes/hero.tscn" id="1_o5qli"]
+
+[node name="Main" type="Node2D" unique_id=585681813]
+
+[node name="background" type="ColorRect" parent="." unique_id=2097348377]
+offset_right = 1080.0
+offset_bottom = 1920.0
+color = Color(0.105882354, 0.12156863, 0.16862746, 1)
+
+[node name="gate" type="ColorRect" parent="background" unique_id=1774471329]
+layout_mode = 0
+offset_top = 1480.0
+offset_right = 1080.0
+offset_bottom = 1560.0
+color = Color(0.423078, 0.14945498, 0.014021402, 1)
+
+[node name="Hero" parent="." unique_id=1003991837 instance=ExtResource("1_o5qli")]
+position = Vector2(540, 1680)
