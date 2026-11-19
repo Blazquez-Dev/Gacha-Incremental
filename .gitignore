@@ -1,0 +1,14 @@
+# Ignorar todo lo que haya en la raíz del repositorio
+/*
+
+# Excepto el proyecto y los archivos propios del repositorio
+!/Gacha-Incremental/
+!/.gitignore
+!/README.md
+
+# Dentro del proyecto: caché de Godot y archivos que no deben subirse
+.godot/
+*.apk
+*.aab
+*.keystore
+export_credentials.cfg
