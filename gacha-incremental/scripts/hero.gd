@@ -1,7 +1,7 @@
 extends Node2D
 
 @export var bullet_scene: PackedScene
-@export var fire_rate := 0.5
+@export var fire_rate := 1.0
 @export var damage := 1
 
 @onready var timer: Timer = $Timer

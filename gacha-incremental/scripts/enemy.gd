@@ -20,7 +20,7 @@ func _ready():
 
 func _process(delta):
 	position.y += speed * delta
-	if position.y > 1480:
+	if position.y > 1380:
 		reached_gate.emit(damage)
 		queue_free()
 

@@ -8,6 +8,9 @@ var xp := 0
 var level := 1
 var choosing := false
 var current_options := []
+var barricade_base_pos := Vector2.ZERO
+var flash_tween: Tween
+var shake_tween: Tween
 
 var upgrade_pool := [
 	{"id": "damage", "title": "Daño +1", "desc": "Cada bala hace más daño"},
@@ -18,15 +21,18 @@ var upgrade_pool := [
 
 @onready var hero = $Hero
 @onready var spawn_timer: Timer = $SpawnTimer
-@onready var hp_label: Label = $UI/HpLabel
 @onready var level_label: Label = $UI/LevelLabel
 @onready var xp_bar: ProgressBar = $UI/XpBar
 @onready var level_up_panel: Control = $UI/LevelUp
 @onready var option_buttons := [$UI/LevelUp/Option1, $UI/LevelUp/Option2, $UI/LevelUp/Option3]
 @onready var game_over_panel: Control = $UI/GameOver
 @onready var restart_button: Button = $UI/GameOver/RestartButton
+@onready var hp_label: Label = $UI/GateBar/HpLabel
+@onready var gate_bar: ProgressBar = $UI/GateBar
+@onready var barricade: Sprite2D = $Barricade
 
 func _ready():
+	barricade_base_pos = barricade.position
 	gate_hp = gate_max_hp
 	_update_hp_label()
 	_update_xp_ui()
@@ -41,7 +47,7 @@ func _ready():
 
 func _spawn_enemy():
 	var enemy = enemy_scene.instantiate()
-	enemy.position = Vector2(randf_range(60, 1020), -50)
+	enemy.position = Vector2(randf_range(130, 950), -50)
 	enemy.reached_gate.connect(_on_enemy_reached_gate)
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
@@ -49,6 +55,7 @@ func _spawn_enemy():
 func _on_enemy_reached_gate(damage):
 	gate_hp = max(gate_hp - damage, 0)
 	_update_hp_label()
+	_hit_barricade()
 	if gate_hp == 0:
 		_game_over()
 
@@ -101,7 +108,9 @@ func _apply_upgrade(id):
 	_update_hp_label()
 
 func _update_hp_label():
-	hp_label.text = "Portón: %d / %d" % [gate_hp, gate_max_hp]
+	hp_label.text = "%d / %d" % [gate_hp, gate_max_hp]
+	gate_bar.max_value = gate_max_hp
+	gate_bar.value = gate_hp
 
 func _update_xp_ui():
 	level_label.text = "Nivel %d" % level
@@ -116,3 +125,21 @@ func _game_over():
 func _on_restart():
 	get_tree().paused = false
 	get_tree().reload_current_scene()
+
+func _hit_barricade():
+	# Flash rojo
+	if flash_tween:
+		flash_tween.kill()
+	barricade.modulate = Color(1.0, 0.25, 0.25)
+	flash_tween = create_tween()
+	flash_tween.tween_property(barricade, "modulate", Color.WHITE, 0.3)
+
+	# Vibración
+	if shake_tween:
+		shake_tween.kill()
+	barricade.position = barricade_base_pos
+	shake_tween = create_tween()
+	for i in 5:
+		var offset = Vector2(randf_range(-8, 8), randf_range(-4, 4))
+		shake_tween.tween_property(barricade, "position", barricade_base_pos + offset, 0.03)
+	shake_tween.tween_property(barricade, "position", barricade_base_pos, 0.03)
