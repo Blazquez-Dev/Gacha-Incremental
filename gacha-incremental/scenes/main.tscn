@@ -5,12 +5,25 @@
 [ext_resource type="PackedScene" uid="uid://bx7q2hp1fll4t" path="res://scenes/enemy.tscn" id="2_sugp2"]
 [ext_resource type="PackedScene" uid="uid://b582l3mwf3ipg" path="res://scenes/background.tscn" id="3_jyhfs"]
 [ext_resource type="Texture2D" uid="uid://bk84xd5v4tiah" path="res://assets/barricada/barricada_1_entera.png" id="4_tbgi4"]
+[ext_resource type="Texture2D" uid="uid://clt4vuyk4bukp" path="res://assets/heroe1/heroe1-busto(sinfondo)(redimensionar).png" id="6_tefeu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4g4og"]
 bg_color = Color(0, 0.06666667, 0.1882353, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xcb8e"]
 bg_color = Color(1, 0.23137255, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_biic7"]
+bg_color = Color(0, 0, 0.05490196, 1)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.92443544, 0.79756033, 0, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="Main" type="Node2D" unique_id=585681813]
 script = ExtResource("1_0wfyh")
@@ -74,27 +87,11 @@ custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 
-[node name="GameOver" type="VBoxContainer" parent="UI" unique_id=495059721]
-offset_left = 290.0
-offset_top = 700.0
-offset_right = 790.0
-offset_bottom = 1000.0
-
-[node name="GameOverLabel" type="Label" parent="UI/GameOver" unique_id=1364896249]
-layout_mode = 2
-theme_override_font_sizes/font_size = 64
-text = "¡HAS PERDIDO!"
-
-[node name="RestartButton" type="Button" parent="UI/GameOver" unique_id=1506061313]
-layout_mode = 2
-theme_override_font_sizes/font_size = 48
-text = "Reintentar"
-
 [node name="GateBar" type="ProgressBar" parent="UI" unique_id=179778109]
-offset_left = 330.0
-offset_top = 1740.0
-offset_right = 970.0
-offset_bottom = 1784.0
+offset_left = 321.0
+offset_top = 1496.0
+offset_right = 965.0
+offset_bottom = 1547.0
 theme_override_styles/background = SubResource("StyleBoxFlat_4g4og")
 theme_override_styles/fill = SubResource("StyleBoxFlat_xcb8e")
 show_percentage = false
@@ -113,3 +110,51 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 28
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="HudBust" type="Panel" parent="UI" unique_id=1242568691]
+clip_contents = true
+offset_left = 90.0
+offset_top = 1489.0
+offset_right = 320.0
+offset_bottom = 1704.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_biic7")
+
+[node name="TextureRect" type="TextureRect" parent="UI/HudBust" unique_id=1401887915]
+texture_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 7.0
+offset_right = -5.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_tefeu")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillButton" type="Button" parent="UI" unique_id=972697249]
+offset_left = 361.0
+offset_top = 1568.0
+offset_right = 460.0
+offset_bottom = 1662.0
+theme_override_font_sizes/font_size = 44
+text = "HAB"
+
+[node name="GameOver" type="VBoxContainer" parent="UI" unique_id=495059721]
+offset_left = 290.0
+offset_top = 700.0
+offset_right = 790.0
+offset_bottom = 1000.0
+
+[node name="GameOverLabel" type="Label" parent="UI/GameOver" unique_id=1364896249]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "¡HAS PERDIDO!"
+
+[node name="RestartButton" type="Button" parent="UI/GameOver" unique_id=1506061313]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Reintentar"
