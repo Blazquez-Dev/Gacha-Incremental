@@ -1,9 +1,14 @@
 extends Area2D
 
 var speed := 1200.0
-var damage := 1
+var damage := 1.0
 var direction := Vector2.UP
 var color := Color(1.0, 0.7, 0.2)   # color base; cada héroe podrá tener el suyo
+var burn_dps := 0.0
+var slow := 0.0
+
+const BURN_TIME := 3.0
+const SLOW_TIME := 2.0
 
 func _ready():
 	rotation = direction.angle() + PI / 2
@@ -17,6 +22,11 @@ func _process(delta):
 func _on_area_entered(area):
 	if area.is_in_group("enemies"):
 		area.take_damage(damage)
+		if not area.dead:
+			if burn_dps > 0.0:
+				area.apply_burn(burn_dps, BURN_TIME)
+			if slow > 0.0:
+				area.apply_slow(slow, SLOW_TIME)
 		queue_free()
 
 func _draw():

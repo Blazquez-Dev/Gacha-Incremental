@@ -11,6 +11,8 @@ extends Node2D
 @export var xp_base := 10      # XP para pasar del nivel 1 al 2
 @export var xp_step := 3.0     # aumento lineal por nivel
 @export var xp_curve := 0.15   # aceleración: cuánto más cuesta cada nivel que el anterior
+@export var shield_amount := 25
+var gate_shield := 0
 
 const ExplosionScript = preload("res://scripts/explosion.gd")
 
@@ -28,10 +30,13 @@ var shake_tween: Tween
 var elapsed_time := 0.0
 
 var upgrade_pool := [
-	{"id": "damage", "title": "Daño +1", "desc": "Cada bala hace más daño"},
-	{"id": "rate", "title": "Cadencia +15%", "desc": "Disparas más rápido"},
-	{"id": "repair", "title": "Reparar portón", "desc": "Recupera 30 de vida"},
-	{"id": "gate", "title": "Portón reforzado", "desc": "+25 de vida máxima y cura 25"},
+	{"id": "damage", "title": "Daño", "desc": "Cada bala hace más daño"},
+	{"id": "rate", "title": "Cadencia", "desc": "Disparas más rápido"},
+	{"id": "repair", "title": "Reparar muro", "desc": "Restaura el 40% de su vida máxima"},
+	{"id": "gate", "title": "Muro reforzado", "desc": "+30 de vida máxima"},
+	{"id": "shield", "title": "Escudo del muro", "desc": ""},
+	{"id": "fire", "title": "Balas ígneas", "desc": ""},
+	{"id": "ice", "title": "Balas congelantes", "desc": ""},
 ]
 var special_timers := {}
 
@@ -113,7 +118,6 @@ func _spawn_enemy():
 func _process(delta):
 	elapsed_time += delta
 	_update_time_label()
-	# ... aquí sigue el resto que ya tienes (el bucle de specials)
 	for s in specials:
 		if level < s["min_level"]:
 			continue
@@ -161,11 +165,19 @@ func _alive_of(id: String) -> int:
 	return n
 
 func _on_enemy_reached_gate(damage):
-	gate_hp = max(gate_hp - damage, 0)
+	var remaining = damage
+	if gate_shield > 0:
+		var absorbed = mini(gate_shield, remaining)
+		gate_shield -= absorbed
+		remaining -= absorbed
+	gate_hp = max(gate_hp - remaining, 0)
 	_update_hp_label()
-	_hit_barricade()
+	# Destello azul si el escudo paró todo el golpe, rojo si no
+	_hit_barricade(Color(0.3, 0.6, 1.0) if remaining == 0 else Color(1.0, 0.25, 0.25))
 	if gate_hp == 0:
 		_game_over()
+		
+
 
 func _on_enemy_died(amount):
 	xp += amount
@@ -192,9 +204,23 @@ func _show_options():
 	current_options = pool.slice(0, 3)
 	for i in option_buttons.size():
 		var opt = current_options[i]
-		option_buttons[i].text = opt["title"] + "\n" + opt["desc"]
+		option_buttons[i].text = opt["title"] + "\n" + _option_desc(opt)
 	level_up_panel.show()
 	get_tree().paused = true
+
+func _option_desc(opt) -> String:
+	match opt["id"]:
+		"shield":
+			return "Absorbe %d de daño antes que la vida del muro" % shield_amount
+		"fire":
+			if hero.burn_dps <= 0.0:
+				return "Daño residual de 0.2 por segundo"
+			return "Daño residual: de %.1f a %.1f por segundo" % [hero.burn_dps, hero.burn_dps + 0.1]
+		"ice":
+			if hero.slow <= 0.0:
+				return "Ralentiza a los enemigos un 5%"
+			return "Ralentización: de %d%% a %d%%" % [roundi(hero.slow * 100), roundi((hero.slow + 0.02) * 100)]
+	return opt["desc"]
 
 func _on_option_chosen(index):
 	_apply_upgrade(current_options[index]["id"])
@@ -206,19 +232,26 @@ func _on_option_chosen(index):
 func _apply_upgrade(id):
 	match id:
 		"damage":
-			hero.damage += 1
+			hero.damage += 0.4
 		"rate":
-			hero.fire_rate *= 0.85
+			hero.fire_rate /= 1.1
 			hero.timer.wait_time = hero.fire_rate
 		"repair":
-			gate_hp = min(gate_hp + 30, gate_max_hp)
+			gate_hp = min(gate_hp + roundi(gate_max_hp * 0.4), gate_max_hp)
 		"gate":
-			gate_max_hp += 25
-			gate_hp = min(gate_hp + 25, gate_max_hp)
+			gate_max_hp += 30
+		"shield":
+			gate_shield += shield_amount
+		"fire":
+			hero.burn_dps = 0.2 if hero.burn_dps <= 0.0 else hero.burn_dps + 0.1
+		"ice":
+			hero.slow = 0.05 if hero.slow <= 0.0 else minf(hero.slow + 0.02, 0.8)
 	_update_hp_label()
 
 func _update_hp_label():
 	hp_label.text = "%d / %d" % [gate_hp, gate_max_hp]
+	if gate_shield > 0:
+		hp_label.text += " (+%d)" % gate_shield
 	gate_bar.max_value = gate_max_hp
 	gate_bar.value = gate_hp
 
@@ -236,11 +269,10 @@ func _on_restart():
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 
-func _hit_barricade():
-	# Flash rojo
+func _hit_barricade(flash_color := Color(1.0, 0.25, 0.25)):
 	if flash_tween:
 		flash_tween.kill()
-	barricade.modulate = Color(1.0, 0.25, 0.25)
+	barricade.modulate = flash_color
 	flash_tween = create_tween()
 	flash_tween.tween_property(barricade, "modulate", Color.WHITE, 0.3)
 
@@ -262,14 +294,19 @@ func _on_skill_pressed():
 	skill_button.modulate = Color(1.0, 0.9, 0.4) if aiming else Color.WHITE
 
 func _unhandled_input(event):
-	if not aiming:
+	# Con la granada en mano, el toque lanza la granada (no apunta el arma)
+	if aiming:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			var pos = get_global_mouse_position()
+			if pos.y > 1380:  # no se puede lanzar detrás del portón
+				return
+			_throw_grenade(pos)
+			get_viewport().set_input_as_handled()
 		return
+
+	# Si no, tocar el campo empieza a apuntar el arma
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var pos = get_global_mouse_position()
-		if pos.y > 1380:  # no se puede lanzar detrás del portón
-			return
-		_throw_grenade(pos)
-		get_viewport().set_input_as_handled()
+		hero.start_manual_aim(get_global_mouse_position())
 
 func _throw_grenade(pos: Vector2):
 	aiming = false
