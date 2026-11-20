@@ -5,6 +5,12 @@ extends Node2D
 @export var skill_cooldown := 8.0
 @export var grenade_radius := 220.0
 @export var grenade_damage := 1
+@export var basic_rate := 0.4             # básicos por segundo en el nivel 1
+@export var basic_rate_per_level := 0.2   # cuánto sube por nivel
+@export var max_basic := 60               # tope de básicos vivos (rendimiento)
+@export var xp_base := 10      # XP para pasar del nivel 1 al 2
+@export var xp_step := 3.0     # aumento lineal por nivel
+@export var xp_curve := 0.15   # aceleración: cuánto más cuesta cada nivel que el anterior
 
 const ExplosionScript = preload("res://scripts/explosion.gd")
 
@@ -19,12 +25,44 @@ var current_options := []
 var barricade_base_pos := Vector2.ZERO
 var flash_tween: Tween
 var shake_tween: Tween
+var elapsed_time := 0.0
 
 var upgrade_pool := [
 	{"id": "damage", "title": "Daño +1", "desc": "Cada bala hace más daño"},
 	{"id": "rate", "title": "Cadencia +15%", "desc": "Disparas más rápido"},
 	{"id": "repair", "title": "Reparar portón", "desc": "Recupera 30 de vida"},
 	{"id": "gate", "title": "Portón reforzado", "desc": "+25 de vida máxima y cura 25"},
+]
+var special_timers := {}
+
+var specials := [
+	{
+		"id": "runner",
+		"scene": "res://scenes/runner.tscn",
+		"hp": 3, "speed": 260.0, "damage": 8, "xp": 2,
+		"min_level": 1, "full_level": 50,   # de aquí a aquí va escalando
+		"chance_start": 0.50, "chance_end": 2.00,
+		"max_start": 1, "max_end": 10,
+		"roll_every": 3.0,                  # cada cuántos segundos tira el dado
+	},
+	{
+		"id": "tank",
+		"scene": "res://scenes/tank.tscn",
+		"hp": 12, "speed": 80.0, "damage": 25, "xp": 4,
+		"min_level": 3, "full_level": 60,
+		"chance_start": 0.2, "chance_end": 1,
+		"max_start": 1, "max_end": 6,
+		"roll_every": 3,
+	},
+	{
+		"id": "boss1",
+		"scene": "res://scenes/boss1.tscn",
+		"hp": 20, "speed": 30.0, "damage": 45, "xp": 10,
+		"min_level": 5, "full_level": 60,
+		"chance_start": 1, "chance_end": 1,
+		"max_start": 1, "max_end": 2,
+		"roll_every": 5,
+	},
 ]
 
 @onready var hero = $Hero
@@ -40,8 +78,10 @@ var upgrade_pool := [
 @onready var barricade: Sprite2D = $Barricade
 @onready var skill_button: Button = $UI/SkillButton
 @onready var skill_cooldown_bar: TextureProgressBar = $UI/SkillButton/CooldownBar
+@onready var time_label: Label = $UI/TimeLabel
 
 func _ready():
+	_update_time_label()
 	barricade_base_pos = barricade.position
 	gate_hp = gate_max_hp
 	_update_hp_label()
@@ -54,16 +94,71 @@ func _ready():
 	skill_button.pressed.connect(_on_skill_pressed)
 	skill_cooldown_bar.max_value = 100.0
 	skill_cooldown_bar.value = 100.0
-	spawn_timer.wait_time = 1.0
+	_update_spawn_rate()
 	spawn_timer.timeout.connect(_spawn_enemy)
 	spawn_timer.start()
 
+func _update_spawn_rate():
+	var rate = basic_rate + basic_rate_per_level * (level - 1)
+	spawn_timer.wait_time = 1.0 / rate
+
 func _spawn_enemy():
+	if _alive_of("basic") >= max_basic:
+		return
 	var enemy = enemy_scene.instantiate()
+	enemy.set_meta("type_id", "basic")
+	_add_enemy(enemy)
+
+
+func _process(delta):
+	elapsed_time += delta
+	_update_time_label()
+	# ... aquí sigue el resto que ya tienes (el bucle de specials)
+	for s in specials:
+		if level < s["min_level"]:
+			continue
+		var id = s["id"]
+		special_timers[id] = special_timers.get(id, 0.0) + delta
+		if special_timers[id] >= s["roll_every"]:
+			special_timers[id] -= s["roll_every"]
+			_try_spawn_special(s)
+			
+func _update_time_label():
+	var minutes = floori(elapsed_time / 60.0)
+	var seconds = int(elapsed_time) % 60
+	time_label.text = "%02d:%02d" % [minutes, seconds]
+
+func _try_spawn_special(s):
+	# t va de 0 (nivel inicial) a 1 (nivel final)
+	var t = clampf(float(level - s["min_level"]) / float(s["full_level"] - s["min_level"]), 0.0, 1.0)
+	var chance = lerpf(s["chance_start"], s["chance_end"], t)
+	var max_alive = roundi(lerpf(s["max_start"], s["max_end"], t))
+
+	if _alive_of(s["id"]) >= max_alive:
+		return
+	if randf() > chance:
+		return
+
+	var enemy = load(s["scene"]).instantiate()
+	enemy.hp = s["hp"]
+	enemy.speed = s["speed"]
+	enemy.damage = s["damage"]
+	enemy.xp_value = s["xp"]
+	enemy.set_meta("type_id", s["id"])
+	_add_enemy(enemy)
+
+func _add_enemy(enemy):
 	enemy.position = Vector2(randf_range(130, 950), -50)
 	enemy.reached_gate.connect(_on_enemy_reached_gate)
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
+
+func _alive_of(id: String) -> int:
+	var n := 0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e.get_meta("type_id", "") == id:
+			n += 1
+	return n
 
 func _on_enemy_reached_gate(damage):
 	gate_hp = max(gate_hp - damage, 0)
@@ -78,13 +173,15 @@ func _on_enemy_died(amount):
 	_check_level_up()
 
 func xp_needed():
-	return 4 + level * 2
+	var n = level - 1
+	return roundi(xp_base + xp_step * n + xp_curve * n * n)
 
 func _check_level_up():
 	if choosing or xp < xp_needed():
 		return
 	xp -= xp_needed()
 	level += 1
+	_update_spawn_rate()
 	_update_xp_ui()
 	_show_options()
 

@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://bghswo6dk8n77"]
+
+[ext_resource type="Script" uid="uid://df60ayaps86fp" path="res://scripts/enemy.gd" id="1_g66np"]
+[ext_resource type="Texture2D" uid="uid://brhhf15f11s6" path="res://assets/tankEnemy/frame_000.png" id="2_6vu8p"]
+[ext_resource type="Texture2D" uid="uid://cuoijskt5u2pc" path="res://assets/tankEnemy/frame_001.png" id="3_w2kvd"]
+[ext_resource type="Texture2D" uid="uid://71ucea0rtj0m" path="res://assets/tankEnemy/frame_002.png" id="4_2slht"]
+[ext_resource type="Texture2D" uid="uid://bfsqbucrwrqhl" path="res://assets/tankEnemy/frame_003.png" id="5_owdos"]
+[ext_resource type="Texture2D" uid="uid://bd1032xdikq0h" path="res://assets/tankEnemy/frame_004.png" id="6_i2dqb"]
+[ext_resource type="Texture2D" uid="uid://dn2ec20cms6if" path="res://assets/tankEnemy/frame_005.png" id="7_g66np"]
+[ext_resource type="Texture2D" uid="uid://cwul2d7kou8tn" path="res://assets/tankEnemy/frame_006.png" id="8_c50an"]
+[ext_resource type="Texture2D" uid="uid://c3k7f2wyfcw75" path="res://assets/tankEnemy/frame_007.png" id="9_6swvq"]
+[ext_resource type="Texture2D" uid="uid://d20a1peevpt0u" path="res://assets/tankEnemy/frame_008.png" id="10_skifl"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_biic7"]
+resource_name = "walk"
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_6vu8p")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_w2kvd")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_2slht")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_owdos")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_i2dqb")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_g66np")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_c50an")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_6swvq")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_skifl")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 25.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_xcb8e"]
+radius = 68.0
+height = 138.0
+
+[node name="Enemy" type="Area2D" unique_id=1999530270]
+script = ExtResource("1_g66np")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=641860426]
+texture_filter = 1
+position = Vector2(1.5258789e-05, -0.9999924)
+scale = Vector2(1.5507814, 1.4804688)
+sprite_frames = SubResource("SpriteFrames_biic7")
+animation = &"walk"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1212448571]
+position = Vector2(0, 2)
+shape = SubResource("CapsuleShape2D_xcb8e")

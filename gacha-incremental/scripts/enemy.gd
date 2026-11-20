@@ -3,8 +3,8 @@ extends Area2D
 signal reached_gate(damage)
 signal died(xp)
 
-var speed := 150.0
-var hp := 3
+var speed := 100.0
+var hp := 4
 var damage := 10
 var xp_value := 1
 var color := Color.WHITE

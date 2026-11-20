@@ -68,14 +68,16 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_xcb8e"]
-radius = 60.5
-height = 130.0
+radius = 46.5
+height = 106.0
 
 [node name="Enemy" type="Area2D" unique_id=1999530270]
 script = ExtResource("1_7p1mj")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=641860426]
 texture_filter = 1
+position = Vector2(0.9999981, 2.000002)
+scale = Vector2(0.82421875, 0.7890625)
 sprite_frames = SubResource("SpriteFrames_biic7")
 animation = &"walk"
 
