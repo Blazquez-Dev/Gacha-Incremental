@@ -2,7 +2,15 @@ extends Node2D
 
 @export var enemy_scene: PackedScene
 @export var gate_max_hp := 100
+@export var skill_cooldown := 8.0
+@export var grenade_radius := 220.0
+@export var grenade_damage := 1
 
+const ExplosionScript = preload("res://scripts/explosion.gd")
+
+var aiming := false
+var skill_ready := true
+var skill_tween: Tween
 var gate_hp := 0
 var xp := 0
 var level := 1
@@ -30,6 +38,8 @@ var upgrade_pool := [
 @onready var hp_label: Label = $UI/GateBar/HpLabel
 @onready var gate_bar: ProgressBar = $UI/GateBar
 @onready var barricade: Sprite2D = $Barricade
+@onready var skill_button: Button = $UI/SkillButton
+@onready var skill_cooldown_bar: TextureProgressBar = $UI/SkillButton/CooldownBar
 
 func _ready():
 	barricade_base_pos = barricade.position
@@ -41,6 +51,9 @@ func _ready():
 	restart_button.pressed.connect(_on_restart)
 	for i in option_buttons.size():
 		option_buttons[i].pressed.connect(_on_option_chosen.bind(i))
+	skill_button.pressed.connect(_on_skill_pressed)
+	skill_cooldown_bar.max_value = 100.0
+	skill_cooldown_bar.value = 100.0
 	spawn_timer.wait_time = 1.0
 	spawn_timer.timeout.connect(_spawn_enemy)
 	spawn_timer.start()
@@ -143,3 +156,43 @@ func _hit_barricade():
 		var offset = Vector2(randf_range(-8, 8), randf_range(-4, 4))
 		shake_tween.tween_property(barricade, "position", barricade_base_pos + offset, 0.03)
 	shake_tween.tween_property(barricade, "position", barricade_base_pos, 0.03)
+
+func _on_skill_pressed():
+	if not skill_ready:
+		return
+	# Pulsar activa el modo apuntado; volver a pulsar lo cancela
+	aiming = not aiming
+	skill_button.modulate = Color(1.0, 0.9, 0.4) if aiming else Color.WHITE
+
+func _unhandled_input(event):
+	if not aiming:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var pos = get_global_mouse_position()
+		if pos.y > 1380:  # no se puede lanzar detrás del portón
+			return
+		_throw_grenade(pos)
+		get_viewport().set_input_as_handled()
+
+func _throw_grenade(pos: Vector2):
+	aiming = false
+	skill_button.modulate = Color.WHITE
+	skill_ready = false
+
+	_explode(pos)
+
+	# El enfriamiento empieza al lanzar, no al pulsar el botón
+	skill_cooldown_bar.value = 0.0
+	skill_tween = create_tween()
+	skill_tween.tween_property(skill_cooldown_bar, "value", 100.0, skill_cooldown)
+	skill_tween.tween_callback(_on_skill_ready)
+
+func _explode(pos: Vector2):
+	var boom = ExplosionScript.new()
+	boom.radius = grenade_radius
+	boom.damage = grenade_damage
+	boom.position = pos
+	add_child(boom)
+
+func _on_skill_ready():
+	skill_ready = true
